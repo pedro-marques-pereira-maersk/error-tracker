@@ -34,7 +34,7 @@ defmodule ErrorTracker.Telemetry do
   | event                                   | measures       | metadata                          |
   | --------------------------------------- | -------------- | ----------------------------------|
   | `[:error_tracker, :error, :new]`        | `:system_time` | `:error`                          |
-  | `[:error_tracker, :error, :unresolved]` | `:system_time` | `:error`                          |
+  | `[:error_tracker, :error, :unresolved]` | `:system_time` | `:error`, `:occurrence` (nullable)|                          |
   | `[:error_tracker, :error, :resolved]`   | `:system_time` | `:error`                          |
   | `[:error_tracker, :occurrence, :new]`   | `:system_time` | `:occurrence`, `:error`, `:muted` |
 
@@ -55,7 +55,14 @@ defmodule ErrorTracker.Telemetry do
   @doc false
   def unresolved_error(%ErrorTracker.Error{} = error) do
     measurements = %{system_time: System.system_time()}
-    metadata = %{error: error}
+    metadata = %{error: error, occurrence: nil}
+    :telemetry.execute([:error_tracker, :error, :unresolved], measurements, metadata)
+  end
+
+  @doc false
+  def previously_resolved_error(%ErrorTracker.Error{} = error, %ErrorTracker.Occurrence{} = occurrence) do
+    measurements = %{system_time: System.system_time()}
+    metadata = %{error: error, occurrence: occurrence}
     :telemetry.execute([:error_tracker, :error, :unresolved], measurements, metadata)
   end
 

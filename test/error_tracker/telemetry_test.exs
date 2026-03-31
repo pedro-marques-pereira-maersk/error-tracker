@@ -49,7 +49,7 @@ defmodule ErrorTracker.TelemetryTest do
     # The unresolved event will be emitted
     {:ok, _unresolved} = ErrorTracker.unresolve(resolved)
 
-    assert_receive {:telemetry_event, [:error_tracker, :error, :unresolved], _, %{error: %Error{}}}
+    assert_receive {:telemetry_event, [:error_tracker, :error, :unresolved], _, %{error: %Error{}, occurrence: nil}}
   end
 
   test "events are emitted for previously resolved errors" do
@@ -64,9 +64,12 @@ defmodule ErrorTracker.TelemetryTest do
 
     ErrorTracker.resolve(error)
 
-    ErrorTracker.report(exception, stacktrace)
+    occurrence = ErrorTracker.report(exception, stacktrace)
 
     assert_receive {:telemetry_event, [:error_tracker, :error, :unresolved], _,
-                    %{error: %Error{reason: "Don't you really hate when a previously resolved error happens again?"}}}
+                    %{
+                      error: %Error{reason: "Don't you really hate when a previously resolved error happens again?"},
+                      occurrence: ^occurrence
+                    }}
   end
 end
