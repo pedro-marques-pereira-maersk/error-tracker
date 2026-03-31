@@ -33,7 +33,7 @@ defmodule ErrorTracker.Telemetry do
 
   | event                                   | measures       | metadata                          |
   | --------------------------------------- | -------------- | ----------------------------------|
-  | `[:error_tracker, :error, :new]`        | `:system_time` | `:error`                          |
+  | `[:error_tracker, :error, :new]`        | `:system_time` | `:error`, `:occurrence`                          |
   | `[:error_tracker, :error, :unresolved]` | `:system_time` | `:error`, `:occurrence` (nullable)|                          |
   | `[:error_tracker, :error, :resolved]`   | `:system_time` | `:error`                          |
   | `[:error_tracker, :occurrence, :new]`   | `:system_time` | `:occurrence`, `:error`, `:muted` |
