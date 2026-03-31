@@ -111,8 +111,6 @@ defmodule ErrorTracker.Integrations.Plug do
     conn |> build_context() |> ErrorTracker.set_context()
   end
 
-  @sensitive_headers ~w[authorization cookie set-cookie]
-
   defp build_context(%Plug.Conn{} = conn) do
     %{
       "request.host" => conn.host,
@@ -120,13 +118,18 @@ defmodule ErrorTracker.Integrations.Plug do
       "request.query" => conn.query_string,
       "request.method" => conn.method,
       "request.ip" => remote_ip(conn),
-      "request.headers" =>
-        Map.new(conn.req_headers, fn {header, value} ->
-          if header in @sensitive_headers, do: {header, "[REDACTED]"}, else: {header, value}
-        end),
+      "request.headers" => conn.req_headers |> Map.new() |> Map.reject(&should_not_be_leaked?/1),
       # Depending on the error source, the request params may have not been fetched yet
       "request.params" => if(!is_struct(conn.params, Plug.Conn.Unfetched), do: conn.params)
     }
+  end
+
+  @sensitive ~w[cookie auth key secret token password credential private]
+
+  defp should_not_be_leaked?({key, _value}) do
+    downcased = String.downcase(key)
+
+    Enum.any?(@sensitive, &String.contains?(downcased, &1))
   end
 
   defp remote_ip(%Plug.Conn{} = conn) do
