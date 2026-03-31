@@ -51,4 +51,22 @@ defmodule ErrorTracker.TelemetryTest do
 
     assert_receive {:telemetry_event, [:error_tracker, :error, :unresolved], _, %{error: %Error{}}}
   end
+
+  test "events are emitted for previously resolved errors" do
+    {exception, stacktrace} =
+      try do
+        raise "Don't you really hate when a previously resolved error happens again?"
+      rescue
+        e -> {e, __STACKTRACE__}
+      end
+
+    %Occurrence{error: error = %Error{}} = ErrorTracker.report(exception, stacktrace)
+
+    ErrorTracker.resolve(error)
+
+    ErrorTracker.report(exception, stacktrace)
+
+    assert_receive {:telemetry_event, [:error_tracker, :error, :unresolved], _,
+                    %{error: %Error{reason: "Don't you really hate when a previously resolved error happens again?"}}}
+  end
 end
