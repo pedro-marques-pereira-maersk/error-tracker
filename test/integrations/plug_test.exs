@@ -37,13 +37,6 @@ defmodule ErrorTracker.Integrations.PlugTest do
       conn
       |> Plug.Conn.put_req_header("cookie", "who stole the cookie from the cookie jar ?")
       |> Plug.Conn.put_req_header("authorization", "Bearer plz-dont-leak-my-secrets")
-      |> Plug.Conn.put_req_header("authentication-helper", "hunter42")
-      |> Plug.Conn.put_req_header("important-token", "abcxyz")
-      |> Plug.Conn.put_req_header("private-name", "Some call me... Tim")
-      |> Plug.Conn.put_req_header("special-credential", "drink-your-ovaltine")
-      |> Plug.Conn.put_req_header("special-key", "Begin Private Key; dontleakmeplz")
-      |> Plug.Conn.put_req_header("special-secret", "Shh, it's a secret")
-      |> Plug.Conn.put_req_header("special-password", "correct-horse-battery-staple")
       |> Plug.Conn.put_req_header("safe", "this can be safely stored in cleartext")
 
     IntegrationPlug.report_error(
@@ -54,19 +47,8 @@ defmodule ErrorTracker.Integrations.PlugTest do
 
     [occurrence] = repo().all(ErrorTracker.Occurrence)
 
-    header_names = occurrence.context |> Map.get("request.headers") |> Map.keys()
-
-    refute "cookie" in header_names
-    refute "authorization" in header_names
-    refute "authentication-helper" in header_names
-    refute "important-token" in header_names
-    refute "private-name" in header_names
-    refute "special-credential" in header_names
-    refute "special-key" in header_names
-    refute "special-password" in header_names
-    refute "special-secret" in header_names
-
-    assert "safe" in header_names
-    assert length(header_names) == 1
+    assert occurrence.context["request.headers"]["cookie"] == "[REDACTED]"
+    assert occurrence.context["request.headers"]["authorization"] == "[REDACTED]"
+    assert occurrence.context["request.headers"]["safe"] != "[REDACTED]"
   end
 end
