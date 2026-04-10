@@ -6,6 +6,7 @@ defmodule ErrorTracker.Web.Live.Dashboard do
   import Ecto.Query
 
   alias ErrorTracker.Error
+  alias ErrorTracker.Occurrence
   alias ErrorTracker.Repo
   alias ErrorTracker.Web.Search
 
@@ -115,7 +116,10 @@ defmodule ErrorTracker.Web.Live.Dashboard do
   end
 
   defp filter(query, search) do
-    Enum.reduce(search, query, &do_filter/2)
+    search
+    |> Map.delete(:team)
+    |> Enum.reduce(query, &do_filter/2)
+    |> then(&do_filter_team(search, &1))
   end
 
   defp do_filter({:status, status}, query) do
@@ -131,4 +135,51 @@ defmodule ErrorTracker.Web.Live.Dashboard do
       :sqlite -> where(query, [error], like(field(error, ^field), ^"%#{value}%"))
     end)
   end
+
+  defp do_filter_team(%{team: team}, query) do
+    latest_occurrence_ids =
+      from o in Occurrence,
+        group_by: o.error_id,
+        select: %{error_id: o.error_id, latest_id: max(o.id)}
+
+    query =
+      query
+      |> join(:inner, [e], lo in subquery(latest_occurrence_ids), on: lo.error_id == e.id)
+      |> join(:inner, [_e, lo], o in Occurrence, on: o.id == lo.latest_id)
+
+    pattern = "%" <> team <> "%"
+
+    Repo.with_adapter(fn
+      :postgres ->
+        where(
+          query,
+          [_, _, o],
+          fragment("COALESCE(?->>'team', '') ILIKE ?", o.context, ^pattern)
+        )
+
+      :mysql ->
+        where(
+          query,
+          [_, _, o],
+          fragment(
+            "LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(?, '$.team')), '')) LIKE LOWER(?)",
+            o.context,
+            ^pattern
+          )
+        )
+
+      :sqlite ->
+        where(
+          query,
+          [_, _, o],
+          fragment(
+            "LOWER(COALESCE(json_extract(?, '$.team'), '')) LIKE LOWER(?)",
+            o.context,
+            ^pattern
+          )
+        )
+    end)
+  end
+
+  defp do_filter_team(_, query), do: query
 end

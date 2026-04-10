@@ -5,7 +5,8 @@ defmodule ErrorTracker.Web.Search do
     reason: :string,
     source_line: :string,
     source_function: :string,
-    status: :string
+    status: :string,
+    team: :string
   }
 
   defp changeset(params) do
