@@ -22,6 +22,7 @@ defmodule ErrorTracker.Test.ConnCase do
     Application.put_env(:error_tracker, Endpoint,
       live_view: [signing_salt: "GKUFNB6eIphYPACj"],
       secret_key_base: "zYE/3XXAfj3yGwtxFW7GEVA2uESGoeKG4HIhuwEAB9Sq2HfUar9xzSHpKXiiqh+T",
+      render_errors: [formats: [html: ErrorTracker.Test.ErrorView], layout: false, log: :debug],
       debug_errors: false
     )
 
