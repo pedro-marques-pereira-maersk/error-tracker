@@ -97,11 +97,9 @@ defmodule ErrorTracker.MixProject do
       {:styler, "~> 1.11", only: [:dev, :test], runtime: false},
       {:tailwind, "~> 0.2", only: :dev},
       # Test dependencies
-      # Forcing elixir_make to be >= 0.9.0 to set lazy_html as a test dependency, which is required for LiveView testing
-      {:elixir_make, "~> 0.9.0"},
       {:lazy_html, ">= 0.1.0", only: :test},
       # Optional dependencies
-      {:ecto_sqlite3, ">= 0.0.0", optional: true},
+      {:ecto_sqlite3, ">= 0.17.0", optional: true},
       {:igniter, "~> 0.5", optional: true},
       {:jason, "~> 1.1", optional: true},
       {:myxql, ">= 0.0.0", optional: true},
