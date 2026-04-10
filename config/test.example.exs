@@ -26,3 +26,5 @@ config :error_tracker, ecto_repos: [Repo]
 
 # Repo is selected in the test_helper.exs based on the given ENV vars
 config :error_tracker, otp_app: :error_tracker
+
+config :logger, level: :warning
