@@ -117,9 +117,9 @@ defmodule ErrorTracker.Web.Live.Dashboard do
 
   defp filter(query, search) do
     search
-    |> Map.delete(:team)
+    |> Map.drop([:context_field, :context_value])
     |> Enum.reduce(query, &do_filter/2)
-    |> then(&do_filter_team(search, &1))
+    |> then(&do_filter_context(search, &1))
   end
 
   defp do_filter({:status, status}, query) do
@@ -136,7 +136,8 @@ defmodule ErrorTracker.Web.Live.Dashboard do
     end)
   end
 
-  defp do_filter_team(%{team: team}, query) do
+  defp do_filter_context(%{context_field: context_field, context_value: context_value}, query)
+       when context_field not in [nil, ""] and context_value not in [nil, ""] do
     latest_occurrence_ids =
       from o in Occurrence,
         group_by: o.error_id,
@@ -147,14 +148,14 @@ defmodule ErrorTracker.Web.Live.Dashboard do
       |> join(:inner, [e], lo in subquery(latest_occurrence_ids), on: lo.error_id == e.id)
       |> join(:inner, [_e, lo], o in Occurrence, on: o.id == lo.latest_id)
 
-    pattern = "%" <> team <> "%"
+    pattern = "%" <> context_value <> "%"
 
     Repo.with_adapter(fn
       :postgres ->
         where(
           query,
           [_, _, o],
-          fragment("COALESCE(?->>'team', '') ILIKE ?", o.context, ^pattern)
+          fragment("COALESCE(?->>?, '') ILIKE ?", o.context, ^context_field, ^pattern)
         )
 
       :mysql ->
@@ -162,8 +163,9 @@ defmodule ErrorTracker.Web.Live.Dashboard do
           query,
           [_, _, o],
           fragment(
-            "LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(?, '$.team')), '')) LIKE LOWER(?)",
+            "LOWER(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(?, CONCAT('$.', ?))), '')) LIKE LOWER(?)",
             o.context,
+            ^context_field,
             ^pattern
           )
         )
@@ -173,13 +175,14 @@ defmodule ErrorTracker.Web.Live.Dashboard do
           query,
           [_, _, o],
           fragment(
-            "LOWER(COALESCE(json_extract(?, '$.team'), '')) LIKE LOWER(?)",
+            "LOWER(COALESCE(json_extract(?, '$.' || ?), '')) LIKE LOWER(?)",
             o.context,
+            ^context_field,
             ^pattern
           )
         )
     end)
   end
 
-  defp do_filter_team(_, query), do: query
+  defp do_filter_context(_, query), do: query
 end

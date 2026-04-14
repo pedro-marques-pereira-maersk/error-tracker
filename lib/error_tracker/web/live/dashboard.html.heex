@@ -1,7 +1,7 @@
 <.form
   for={@search_form}
   id="search"
-  class="mb-4 text-black grid md:grid-cols-5 grid-cols-2 gap-2"
+  class="mb-4 text-black grid md:grid-cols-3 grid-cols-2 gap-2"
   phx-change="search"
 >
   <input
@@ -29,10 +29,18 @@
     phx-debounce
   />
   <input
-    name={@search_form[:team].name}
-    value={@search_form[:team].value}
+    name={@search_form[:context_field].name}
+    value={@search_form[:context_field].value}
     type="text"
-    placeholder="Team"
+    placeholder="Context field"
+    class="border text-sm rounded-lg block p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
+    phx-debounce
+  />
+  <input
+    name={@search_form[:context_value].name}
+    value={@search_form[:context_value].value}
+    type="text"
+    placeholder="Context value"
     class="border text-sm rounded-lg block p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500"
     phx-debounce
   />

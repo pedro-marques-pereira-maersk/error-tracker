@@ -1,7 +1,7 @@
 defmodule ErrorTracker.Web.DashboardTest do
   use ErrorTracker.Test.ConnCase, async: true
 
-  test "filters errors by team", %{conn: conn} do
+  test "filters errors by context field", %{conn: conn} do
     try do
       raise RuntimeError, "Whoops!"
     rescue
@@ -16,9 +16,10 @@ defmodule ErrorTracker.Web.DashboardTest do
 
     assert ErrorTracker.Error |> repo().all() |> length() == 2
 
-    {:ok, view, _html} = live(conn, "/dashboard?team=awesome")
+    {:ok, view, _html} = live(conn, "/dashboard?context_field=team&context_value=awesome")
 
-    assert has_element?(view, ~s/[name="search[team]"][value="awesome"]/)
+    assert has_element?(view, ~s/[name="search[context_field]"][value="team"]/)
+    assert has_element?(view, ~s/[name="search[context_value]"][value="awesome"]/)
 
     assert has_element?(view, "tr", "(RuntimeError) Whoops!")
 
